@@ -2,7 +2,7 @@
 <H3>NAME: KEERTHANA S</H3>
 <H3>REGISTER NO.: 212223240070</H3>
 <H3>EX. NO.5</H3>
-<H3>DATE:</H3>
+<H3>DATE: 24.10.24</H3>
 <H3>Aim:</H3>
 To implement a XOR gate classification using Radial Basis Function  Neural Network.
 
@@ -11,17 +11,10 @@ To implement a XOR gate classification using Radial Basis Function  Neural Netwo
 
 <P>XOR is a classification problem, as it renders binary distinct outputs. If we plot the INPUTS vs OUTPUTS for the XOR gate, as shown in figure below </P>
 
-
-
-
 <P>The graph plots the two inputs corresponding to their output. Visualizing this plot, we can see that it is impossible to separate the different outputs (1 and 0) using a linear equation.
 A Radial Basis Function Network (RBFN) is a particular type of neural network. The RBFN approach is more intuitive than MLP. An RBFN performs classification by measuring the input’s similarity to examples from the training set. Each RBFN neuron stores a “prototype”, which is just one of the examples from the training set. When we want to classify a new input, each neuron computes the Euclidean distance between the input and its prototype. Thus, if the input more closely resembles the class A prototypes than the class B prototypes, it is classified as class A ,else class B.
 A Neural network with input layer, one hidden layer with Radial Basis function and a single node output layer (as shown in figure below) will be able to classify the binary data according to XOR output.
 </P>
-
-
-
-
 
 <H3>ALGORITHM:</H3>
 Step 1: Initialize the input  vector for you bit binary data<Br>
@@ -35,83 +28,77 @@ Step 7: Plot the Input space and Hidden space of RBF NN for XOR classification.
 
 <H3>PROGRAM:</H3>
 
-```
+```py
 import numpy as np
 import matplotlib.pyplot as plt
 
-def gaussian_rbf(x, landmark, gamma=1):
-    return np.exp(-gamma * np.linalg.norm(x - landmark)**2)
+def gaussian_rbf(x, mu, gamma=1):
+    return np.exp(-gamma * np.linalg.norm(x - mu)**2)
 
 def end_to_end(X1, X2, ys, mu1, mu2):
-    from_1 = [gaussian_rbf(np.array([X1[i], X2[i]]), mu1) for i in range(len(X1))]
-    from_2 = [gaussian_rbf(np.array([X1[i], X2[i]]), mu2) for i in range(len(X1))]
+    # Transform data points using RBF
+    transformed_1 = [gaussian_rbf(np.array([X1[i], X2[i]]), mu1) for i in range(len(X1))]
+    transformed_2 = [gaussian_rbf(np.array([X1[i], X2[i]]), mu2) for i in range(len(X1))]
 
     plt.figure(figsize=(13, 5))
 
+    # Plot original data (non-linearly separable)
     plt.subplot(1, 2, 1)
-    plt.scatter((X1[0], X1[3]), (X2[0], X2[3]), label="Class_0")
-    plt.scatter((X1[1], X1[2]), (X2[1], X2[2]), label="Class_1")
+    plt.scatter(X1[:2], X2[:2], label="Class_0")
+    plt.scatter(X1[2:], X2[2:], label="Class_1")
     plt.xlabel("$X1$", fontsize=15)
     plt.ylabel("$X2$", fontsize=15)
     plt.title("Xor: Linearly Inseparable", fontsize=15)
     plt.legend()
 
+    # Plot transformed data (linearly separable)
     plt.subplot(1, 2, 2)
-    plt.scatter(from_1[0], from_2[0], label="Class_0")
-    plt.scatter(from_1[1], from_2[1], label="Class_1")
-    plt.scatter(from_1[2], from_2[2], label="Class_1")
-    plt.scatter(from_1[3], from_2[3], label="Class_0")
+    plt.scatter(transformed_1[:2], transformed_2[:2], label="Class_0")
+    plt.scatter(transformed_1[2:], transformed_2[2:], label="Class_1")
     plt.plot([0, 0.95], [0.95, 0], "k--")
     plt.annotate("Seperating hyperplane", xy=(0.4, 0.55), xytext=(0.55, 0.66),
-                arrowprops=dict(facecolor='black', shrink=0.05))
-    plt.xlabel(f"$mu1$: {(mu1)}", fontsize=15)
-    plt.ylabel(f"$mu2$: {(mu2)}", fontsize=15)
+                 arrowprops=dict(facecolor='black', shrink=0.05))
+    plt.xlabel(f"$mu1$: {mu1}", fontsize=15)
+    plt.ylabel(f"$mu2$: {mu2}", fontsize=15)
     plt.title("Transformed Inputs: Linearly Seperable", fontsize=15)
     plt.legend()
 
-    A = []
-    for i, j in zip(from_1, from_2):
-        temp = []
-        temp.append(i)
-        temp.append(j)
-        temp.append(1)
-        A.append(temp)
-
-    A = np.array(A)
-    W = np.linalg.inv(A.T.dot(A)).dot(A.T).dot(ys)
-    print(np.round(A.dot(W)))
-    print(ys)
+    # Linear transformation (solving for weights)
+    A = np.column_stack([transformed_1, transformed_2, np.ones(len(X1))])
+    W = np.linalg.inv(A.T @ A) @ A.T @ ys
+    print(f"Predicted: {np.round(A @ W)}")
+    print(f"True Labels: {ys}")
     print(f"Weights: {W}")
     return W
 
-def predict_matrix(point, weights):
-    gaussian_rbf_0 = gaussian_rbf(point, mu1)
-    gaussian_rbf_1 = gaussian_rbf(point, mu2)
-    A = np.array([gaussian_rbf_0, gaussian_rbf_1, 1])
-    return np.round(A.dot(weights))
+def predict_matrix(point, weights, mu1, mu2):
+    # RBF transformation of input point
+    transformed_0 = gaussian_rbf(point, mu1)
+    transformed_1 = gaussian_rbf(point, mu2)
+    A = np.array([transformed_0, transformed_1, 1])
+    return np.round(A @ weights)
 
-# points
+# Data points
 x1 = np.array([0, 0, 1, 1])
 x2 = np.array([0, 1, 0, 1])
 ys = np.array([0, 1, 1, 0])
 
-# centers
+# Centers of RBF
 mu1 = np.array([0, 1])
 mu2 = np.array([1, 0])
 
-w = end_to_end(x1, x2, ys, mu1, mu2)
+# Train model
+weights = end_to_end(x1, x2, ys, mu1, mu2)
 
-# testing
-print(f"Input:{np.array([0, 0])}, Predicted: {predict_matrix(np.array([0, 0]), w)}")
-print(f"Input:{np.array([0, 1])}, Predicted: {predict_matrix(np.array([0, 1]), w)}")
-print(f"Input:{np.array([1, 0])}, Predicted: {predict_matrix(np.array([1, 0]), w)}")
-print(f"Input:{np.array([1, 1])}, Predicted: {predict_matrix(np.array([1, 1]), w)}")
+# Testing predictions
+for test_point in [[0, 0], [0, 1], [1, 0], [1, 1]]:
+    print(f"Input: {test_point}, Predicted: {predict_matrix(np.array(test_point), weights, mu1, mu2)}")
 
 ```
 
 <H3>OUTPUT:</H3>
 
-![Screenshot 2024-10-24 094232](https://github.com/user-attachments/assets/c30695ed-b8d4-4b2b-aec7-1611fdd487aa)
+![image](https://github.com/user-attachments/assets/d8524aab-a191-4f0a-b67d-8b9be88e01a8)
 
 <H3>Result:</H3>
 Thus , a Radial Basis Function Neural Network is implemented to classify XOR data.
